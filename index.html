@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dearlily Hanzi</title>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <style>
+        :root { --primary: #ff4757; --bg: #ffffff; }
+        body { font-family: -apple-system, sans-serif; background: #f1f2f6; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+        .header { width: 100%; padding: 15px; background: white; display: flex; justify-content: space-around; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #grid-canvas { background: white; border: 2px solid #ddd; border-radius: 15px; margin: 20px auto; width: 300px; height: 300px; position: relative; }
+        .msg { height: 40px; color: #57606f; font-weight: bold; margin-bottom: 10px; text-align: center; width: 90%; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 90%; margin-top: auto; padding-bottom: 30px; }
+        button { padding: 15px; border: none; border-radius: 12px; background: #2f3542; color: white; font-size: 16px; font-weight: bold; transition: 0.2s; }
+        button:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-learn { background: #1e90ff; } .btn-review { background: #ffa502; } .btn-test { background: #ff4757; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <span>🌹 <span id="energy">0</span></span>
+    <span>Mode: <span id="mode">Home</span></span>
+</div>
+
+<div id="grid-canvas"></div>
+<div class="msg" id="msg">Chọn chế độ để bắt đầu</div>
+
+<div class="controls">
+    <button class="btn-learn" onclick="setMode('learn')">Learn</button>
+    <button class="btn-review" onclick="setMode('review')">Review</button>
+    <button class="btn-test" onclick="setMode('test')">Test</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD5rrTKwBjfGT-M6vVl2RJEM5o7Y2vCOJo",
+        authDomain: "dearlily-8d71f.firebaseapp.com",
+        databaseURL: "https://dearlily-8d71f-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "dearlily-8d71f",
+        storageBucket: "dearlily-8d71f.firebasestorage.app",
+        appId: "1:517365172899:web:48e3efa1651159b412cd16"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const userRef = ref(db, 'userData');
+
+    let userData = { energy: 10, words: { "学": { lv: 0, mstr: false, total: 0 } } };
+    let writer;
+    let currentMode = '';
+    let currentWord = '学';
+
+    // Đồng bộ với Firebase
+    onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            userData = snapshot.val();
+            document.getElementById('energy').innerText = userData.energy;
+        } else {
+            set(userRef, userData);
+        }
+    });
+
+    window.setMode = (mode) => {
+        if (userData.energy < 5) {
+            alert("Hết hoa hồng 🌹 rồi!");
+            return;
+        }
+        currentMode = mode;
+        document.getElementById('mode').innerText = mode.toUpperCase();
+        userData.energy -= 5;
+        update(userRef, { energy: userData.energy });
+        initWriter(currentWord);
+    };
+
+    function initWriter(word) {
+        document.getElementById('grid-canvas').innerHTML = '';
+        document.getElementById('msg').innerText = "Đang tải chữ...";
+        
+        writer = HanziWriter.create('grid-canvas', word, {
+            width: 300, height: 300, padding: 5,
+            showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 200,
+            onMistake: () => {
+                userData.energy -= 1;
+                update(userRef, { energy: userData.energy });
+                document.getElementById('msg').innerText = "Sai nét! -1 🌹";
+            }
+        });
+
+        if (currentMode === 'learn') startLearnLogic();
+        if (currentMode === 'test') startTestLogic();
+    }
+
+    function startLearnLogic() {
+        document.getElementById('msg').innerText = "Bước 1: Quan sát nét vẽ";
+        writer.animateCharacter({ onComplete: () => {
+            document.getElementById('msg').innerText = "Bước 2: Viết lại theo mẫu";
+            writer.quiz();
+        }});
+    }
+
+    function startTestLogic() {
+        document.getElementById('msg').innerText = "Test: Viết chữ không có mẫu!";
+        writer.hideOutline();
+        writer.quiz({
+            onComplete: (summary) => {
+                let wordData = userData.words[currentWord];
+                wordData.lv += 1;
+                document.getElementById('msg').innerText = "Đúng! Level +1";
+                if (wordData.lv >= 10) {
+                    wordData.mstr = true;
+                    userData.energy += 10;
+                    document.getElementById('msg').innerText = "MASTERED! +10 🌹";
+                }
+                update(userRef, { words: userData.words, energy: userData.energy });
+            }
+        });
+    }
+
+</script>
+</body>
+</html>
