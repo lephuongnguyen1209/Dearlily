@@ -3,82 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Học Viết Chữ Hán</title>
+    <title>Hán Ngữ Skritter Clone</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f4f4f9; padding-top: 50px; }
-        #target-kanji { background: white; border: 2px solid #333; border-radius: 8px; cursor: crosshair; }
-        .info { margin: 20px; text-align: center; }
-        .controls { display: flex; gap: 10px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; }
-        button:hover { background-color: #e0e0e0; }
-        .pinyin { font-size: 24px; color: #d32f2f; font-weight: bold; }
-        .meaning { font-size: 18px; color: #555; }
+        :root { --primary: #2196F3; --success: #4CAF50; --bg: #f9f9f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Navigation */
+        nav { background: #333; width: 100%; display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
+        nav button { background: none; border: 1px solid white; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+        nav button.active { background: white; color: #333; }
+
+        .container { max-width: 600px; width: 90%; margin-top: 20px; display: none; text-align: center; }
+        .container.active { display: block; }
+
+        /* Danh sách từ */
+        .vocab-item { background: white; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; border-left: 5px solid var(--primary); }
+        .mastered { border-left-color: var(--success); opacity: 0.7; }
+
+        /* Bảng vẽ */
+        #writer-container { background: white; border: 2px solid #ddd; border-radius: 10px; display: inline-block; margin: 20px 0; position: relative; }
+        .step-indicator { color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .info-box { margin-bottom: 10px; }
+        .pinyin { font-size: 28px; color: red; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="info">
-        <div id="pinyin" class="pinyin">nǐ</div>
-        <div id="meaning" class="meaning">Bạn, anh, chị</div>
+<nav>
+    <button onclick="showTab('tab-list')" id="btn-list">DS Từ Vựng</button>
+    <button onclick="showTab('tab-learn')" id="btn-learn">Học Từ</button>
+    <button onclick="showTab('tab-quiz')" id="btn-quiz">Ôn Tập</button>
+</nav>
+
+<div id="tab-list" class="container active">
+    <h3>Danh sách từ vựng (Bài 1)</h3>
+    <div id="vocab-list-render"></div>
+</div>
+
+<div id="tab-learn" class="container">
+    <div class="step-indicator" id="learn-step-text">Bước 1: Tập viết theo nét</div>
+    <div class="info-box">
+        <div id="learn-pinyin" class="pinyin"></div>
+        <div id="learn-meaning"></div>
     </div>
-
-    <div id="target-kanji"></div>
-
-    <div class="controls" style="margin-top: 20px;">
-        <button onclick="prevWord()">Trước</button>
-        <button onclick="writer.animateCharacter()">Xem hướng dẫn</button>
-        <button onclick="nextWord()">Sau</button>
+    <div id="writer-container">
+        <div id="learn-writer"></div>
     </div>
+    <div style="margin-top: 10px;">
+        <button onclick="prevLearn()">Từ trước</button>
+        <button onclick="nextLearn()">Từ sau</button>
+    </div>
+</div>
 
-    <script>
-        // Danh sách từ vựng mẫu (Sau này bạn có thể thay bằng file JSON)
-        const vocabulary = [
-            { char: '你', pinyin: 'nǐ', meaning: 'Bạn, anh, chị' },
-            { char: '好', pinyin: 'hǎo', meaning: 'Tốt, khỏe' },
-            { char: '学', pinyin: 'xué', meaning: 'Học' },
-            { char: '习', pinyin: 'xí', meaning: 'Tập' }
-        ];
+<div id="tab-quiz" class="container">
+    <div id="quiz-header">Hệ thống chọn ngẫu nhiên tối đa 15 từ chưa thuộc</div>
+    <div id="quiz-count" style="margin: 10px; font-weight: bold;"></div>
+    <div id="quiz-info" class="info-box">
+        <div id="quiz-pinyin" class="pinyin"></div>
+        <div id="quiz-meaning"></div>
+    </div>
+    <div id="writer-container">
+        <div id="quiz-writer"></div>
+    </div>
+</div>
 
-        let currentIndex = 0;
-        let writer;
+<script>
+    // 1. DATA GỐC (Thay bằng JSON của bạn sau này)
+    const rawData = [
+        { id: 1, char: '你', pinyin: 'nǐ', meaning: 'Bạn' },
+        { id: 2, char: '好', pinyin: 'hǎo', meaning: 'Tốt' },
+        { id: 3, char: '学', pinyin: 'xué', meaning: 'Học' },
+        { id: 4, char: '习', pinyin: 'xí', meaning: 'Tập' },
+        { id: 5, char: '大', pinyin: 'dà', meaning: 'Lớn' }
+    ];
 
-        function initWriter(wordObj) {
-            // Xóa nội dung cũ trong ô vẽ
-            document.getElementById('target-kanji').innerHTML = '';
-            document.getElementById('pinyin').innerText = wordObj.pinyin;
-            document.getElementById('meaning').innerText = wordObj.meaning;
+    // 2. KHỞI TẠO TIẾN ĐỘ (Lấy từ LocalStorage)
+    let userProgress = JSON.parse(localStorage.getItem('hsk_progress')) || {};
+    rawData.forEach(item => {
+        if (!userProgress[item.id]) userProgress[item.id] = { score: 0 };
+    });
 
-            // Khởi tạo Hanzi Writer
-            writer = Hanzi Writer.create('target-kanji', wordObj.char, {
-                width: 300,
-                height: 300,
-                showCharacter: false, // Ẩn chữ gốc để người dùng tự vẽ
-                padding: 15,
-                strokeColor: '#2196F3', // Màu nét vẽ đúng
-                radicalColor: '#f44336' // Màu bộ thủ nếu muốn hiện
-            });
+    let currentLearnIdx = 0;
+    let currentLearnStep = 1; // 1: Hướng dẫn, 2: Mờ, 3: Tự viết
+    let learnWriter, quizWriter;
+    let quizList = [];
+    let currentQuizIdx = 0;
 
-            // Bật chế độ kiểm tra nét vẽ (Quiz)
-            writer.quiz();
+    // --- LOGIC CHUYỂN TAB ---
+    function showTab(tabId) {
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if (tabId === 'tab-list') renderVocabList();
+        if (tabId === 'tab-learn') startLearn();
+        if (tabId === 'tab-quiz') startQuiz();
+    }
+
+    // --- TAB 1: DANH SÁCH ---
+    function renderVocabList() {
+        const listDiv = document.getElementById('vocab-list-render');
+        listDiv.innerHTML = rawData.map(item => `
+            <div class="vocab-item ${userProgress[item.id].score >= 10 ? 'mastered' : ''}">
+                <span><b>${item.char}</b> (${item.pinyin}) - ${item.meaning}</span>
+                <span>⭐ ${userProgress[item.id].score}/10</span>
+            </div>
+        `).join('');
+    }
+
+    // --- TAB 2: HỌC TỪ (3 BƯỚC) ---
+    function startLearn() {
+        const item = rawData[currentLearnIdx];
+        document.getElementById('learn-pinyin').innerText = item.pinyin;
+        document.getElementById('learn-meaning').innerText = item.meaning;
+        updateLearnStep();
+    }
+
+    function updateLearnStep() {
+        const item = rawData[currentLearnIdx];
+        const container = document.getElementById('learn-writer');
+        container.innerHTML = '';
+        
+        let config = { width: 250, height: 250, padding: 10, strokeColor: '#2196F3' };
+        
+        if (currentLearnStep === 1) {
+            document.getElementById('learn-step-text').innerText = "Bước 1: Nhìn và viết theo nét";
+            config.showCharacter = true;
+            learnWriter = Hanzi Writer.create('learn-writer', item.char, config);
+            learnWriter.animateCharacter(); // Tự chạy mẫu 1 lần
+        } else if (currentLearnStep === 2) {
+            document.getElementById('learn-step-text').innerText = "Bước 2: Viết đè lên chữ mờ";
+            config.showCharacter = true;
+            config.characterOutlineColor = '#ddd'; 
+            learnWriter = Hanzi Writer.create('learn-writer', item.char, config);
+        } else {
+            document.getElementById('learn-step-text').innerText = "Bước 3: Tự nhớ để viết";
+            config.showCharacter = false;
+            learnWriter = Hanzi Writer.create('learn-writer', item.char, config);
         }
 
-        function nextWord() {
-            if (currentIndex < vocabulary.length - 1) {
-                currentIndex++;
-                initWriter(vocabulary[currentIndex]);
+        learnWriter.quiz({
+            onComplete: () => {
+                if (currentLearnStep < 3) {
+                    currentLearnStep++;
+                    setTimeout(updateLearnStep, 500);
+                } else {
+                    alert("Giỏi quá! Đã xong 3 bước.");
+                    currentLearnStep = 1;
+                    nextLearn();
+                }
             }
-        }
+        });
+    }
 
-        function prevWord() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                initWriter(vocabulary[currentIndex]);
+    function nextLearn() {
+        if (currentLearnIdx < rawData.length - 1) {
+            currentLearnIdx++;
+            currentLearnStep = 1;
+            startLearn();
+        }
+    }
+
+    // --- TAB 3: ÔN TẬP (NGẪU NHIÊN 15 TỪ) ---
+    function startQuiz() {
+        // Lọc từ chưa thuộc (score < 10) và xáo trộn
+        quizList = rawData
+            .filter(item => userProgress[item.id].score < 10)
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 15);
+        
+        if (quizList.length === 0) {
+            alert("Bạn đã thuộc hết từ vựng rồi!");
+            return;
+        }
+        currentQuizIdx = 0;
+        renderQuiz();
+    }
+
+    function renderQuiz() {
+        const item = quizList[currentQuizIdx];
+        document.getElementById('quiz-count').innerText = `Từ ${currentQuizIdx + 1}/${quizList.length}`;
+        document.getElementById('quiz-pinyin').innerText = item.pinyin;
+        document.getElementById('quiz-meaning').innerText = item.meaning;
+        
+        const container = document.getElementById('quiz-writer');
+        container.innerHTML = '';
+        quizWriter = Hanzi Writer.create('quiz-writer', item.char, {
+            width: 250, height: 250, showCharacter: false, padding: 10
+        });
+
+        quizWriter.quiz({
+            onComplete: () => {
+                // Tăng điểm nếu viết đúng
+                userProgress[item.id].score++;
+                localStorage.setItem('hsk_progress', JSON.stringify(userProgress));
+                
+                setTimeout(() => {
+                    if (currentQuizIdx < quizList.length - 1) {
+                        currentQuizIdx++;
+                        renderQuiz();
+                    } else {
+                        alert("Hoàn thành bài ôn tập!");
+                        showTab('tab-list');
+                    }
+                }, 500);
             }
-        }
+        });
+    }
 
-        // Chạy lần đầu tiên
-        initWriter(vocabulary[currentIndex]);
-    </script>
+    // Khởi tạo app
+    renderVocabList();
+</script>
+
 </body>
 </html>
