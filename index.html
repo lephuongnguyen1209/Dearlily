@@ -3,53 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HSK Study App</title>
+    <title>Học Tiếng Trung</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
         :root { --primary: #5c4b37; --bg: #fdf6e3; --accent: #2196F3; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--primary); }
         
-        /* Menu Bottom */
-        nav { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #ddd; z-index: 9999; }
-        nav button { flex: 1; border: none; background: none; padding: 15px 0; font-size: 16px; color: #888; cursor: pointer; }
-        nav button.active { color: var(--accent); font-weight: bold; border-top: 4px solid var(--accent); }
+        nav { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 9999; }
+        nav button { flex: 1; border: none; background: none; padding: 15px 0; font-size: 14px; color: #888; cursor: pointer; }
+        nav button.active { color: var(--accent); font-weight: bold; border-top: 3px solid var(--accent); }
 
-        .container { display: none; padding: 20px; max-width: 500px; margin: 0 auto; }
-        .container.active { display: block; }
+        .container { display: none; max-width: 500px; margin: 0 auto; padding: 20px; }
+        .container.active { display: block !important; }
 
-        /* Card hiển thị */
-        .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .card { background: #fff; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card b { font-size: 30px; display: block; }
-        
-        #writer-target, #quiz-target { background: #fff; border: 2px solid #ddd; border-radius: 10px; display: inline-block; margin: 15px 0; }
-        .pinyin { font-size: 30px; color: #d32f2f; font-weight: bold; }
-        .controls { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-        button.btn { padding: 10px 20px; border-radius: 20px; border: none; background: var(--accent); color: white; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card { background: #fff; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .card b { font-size: 32px; display: block; }
+
+        .box { background: #fff; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        #writer-target, #quiz-target { background: #fff; border: 2px solid #eee; border-radius: 10px; display: inline-block; margin: 15px 0; }
+        .pinyin { font-size: 32px; color: #d32f2f; font-weight: bold; }
+        .btn-group { display: flex; justify-content: center; gap: 10px; }
+        .btn { padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="tab-list" class="container active">
-    <h2 style="text-align:center">33 từ vựng đã nạp</h2>
-    <div id="list-render" class="vocab-grid"></div>
+    <h2 style="text-align:center">Từ vựng đã nạp</h2>
+    <div id="list-render" class="grid"></div>
 </div>
 
 <div id="tab-learn" class="container">
-    <div style="background:#fff; padding:20px; border-radius:20px; text-align:center;">
-        <div id="step-label" style="color:var(--accent); font-weight:bold"></div>
+    <div class="box">
+        <div id="l-step" style="color:var(--accent); font-weight:bold"></div>
         <div class="pinyin" id="l-pinyin"></div>
-        <div id="l-meaning" style="color:#666"></div>
+        <div id="l-meaning" style="color:#666; margin-bottom:10px"></div>
         <div id="writer-target"></div>
-        <div class="controls">
-            <button class="btn" style="background:#999" onclick="changeWord(-1)">Trở lại</button>
-            <button class="btn" onclick="changeWord(1)">Tiếp theo</button>
+        <div class="btn-group">
+            <button class="btn" style="background:#eee" onclick="changeWord(-1)">Trước</button>
+            <button class="btn" style="background:var(--accent); color:white" onclick="changeWord(1)">Tiếp theo</button>
         </div>
     </div>
 </div>
 
 <div id="tab-quiz" class="container">
-    <div style="background:#fff; padding:20px; border-radius:20px; text-align:center;">
+    <div class="box">
         <div class="pinyin" id="q-pinyin"></div>
         <div id="q-meaning" style="color:#666"></div>
         <div id="quiz-target"></div>
@@ -57,86 +57,91 @@
 </div>
 
 <nav>
-    <button onclick="changeTab('tab-list')" id="nav-tab-list" class="active">Từ vựng</button>
-    <button onclick="changeTab('tab-learn')" id="nav-tab-learn">Học tập</button>
-    <button onclick="changeTab('tab-quiz')" id="nav-tab-quiz">Ôn tập</button>
+    <button onclick="switchTab('tab-list')" id="nav-tab-list" class="active">Từ vựng</button>
+    <button onclick="switchTab('tab-learn')" id="nav-tab-learn">Học tập</button>
+    <button onclick="switchTab('tab-quiz')" id="nav-tab-quiz">Ôn tập</button>
 </nav>
 
 <script>
-    // Dữ liệu mẫu (Bạn có thể thêm tiếp)
-    const rawData = [
+    // Dữ liệu đồng bộ với ảnh bạn gửi
+    const vocab = [
         { id: 1, char: '你', pinyin: 'nǐ', meaning: 'Bạn' },
         { id: 2, char: '好', pinyin: 'hǎo', meaning: 'Tốt' },
-        { id: 3, char: '银行', pinyin: 'yínháng', meaning: 'Ngân hàng' },
+        { id: 3, char: '你好', pinyin: 'nǐ hǎo', meaning: 'Chào bạn' },
         { id: 4, char: '邮局', pinyin: 'yóujú', meaning: 'Bưu điện' },
-        { id: 5, char: '明天', pinyin: 'míngtiān', meaning: 'Ngày mai' }
+        { id: 5, char: '银行', pinyin: 'yínháng', meaning: 'Ngân hàng' },
+        { id: 6, char: '英语', pinyin: 'yīngyǔ', meaning: 'Tiếng Anh' }
     ];
 
-    let progress = JSON.parse(localStorage.getItem('hsk_data_v2')) || {};
-    rawData.forEach(d => { if(!progress[d.id]) progress[d.id] = 0; });
+    let progress = JSON.parse(localStorage.getItem('hsk_study_v4')) || {};
+    vocab.forEach(v => { if(!progress[v.id]) progress[v.id] = 0; });
 
     let curIdx = 0, curStep = 1, curCharIdx = 0, writer;
 
-    // Hàm chuyển Tab
-    function changeTab(id) {
-        console.log("Chuyển sang tab:", id);
-        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+    function switchTab(id) {
+        // Ẩn tất cả tab và bỏ active nút
+        document.querySelectorAll('.container').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
         
-        document.getElementById(id).classList.add('active');
-        document.getElementById('nav-' + id).classList.add('active');
+        // Hiện tab được chọn
+        const targetTab = document.getElementById(id);
+        const targetBtn = document.getElementById('nav-' + id);
+        
+        if (targetTab && targetBtn) {
+            targetTab.classList.add('active');
+            targetBtn.classList.add('active');
+        }
 
         if(id === 'tab-list') renderList();
-        if(id === 'tab-learn') { curCharIdx = 0; initLearn(); }
-        if(id === 'tab-quiz') { curCharIdx = 0; initQuiz(); }
+        if(id === 'tab-learn') { curCharIdx = 0; loadLearn(); }
+        if(id === 'tab-quiz') { curCharIdx = 0; loadQuiz(); }
     }
 
     function renderList() {
-        document.getElementById('list-render').innerHTML = rawData.map(d => `
+        document.getElementById('list-render').innerHTML = vocab.map(v => `
             <div class="card">
-                <b>${d.char}</b>
-                <p>${d.pinyin}</p>
-                <small>⭐ ${progress[d.id]}/10</small>
+                <b>${v.char}</b>
+                <p>${v.pinyin}</p>
+                <small>⭐ ${progress[v.id]}</small>
             </div>
         `).join('');
     }
 
-    function initLearn() {
-        const item = rawData[curIdx];
+    function loadLearn() {
+        const item = vocab[curIdx];
         const chars = Array.from(item.char);
         document.getElementById('l-pinyin').innerText = item.pinyin;
         document.getElementById('l-meaning').innerText = item.meaning;
-        document.getElementById('step-label').innerText = `BƯỚC ${curStep}: Viết chữ ${chars[curCharIdx]}`;
+        document.getElementById('l-step').innerText = `Bước ${curStep}: Viết ${chars[curCharIdx]}`;
         
         document.getElementById('writer-target').innerHTML = '';
-        writer = Hanzi Writer.create('writer-target', chars[curCharIdx], {
-            width: 250, height: 250, padding: 15,
-            showCharacter: (curStep < 3), characterOutlineColor: (curStep === 2 ? '#ddd' : 'transparent')
+        // CHÚ Ý: HanziWriter phải viết liền, không có dấu cách
+        writer = HanziWriter.create('writer-target', chars[curCharIdx], {
+            width: 230, height: 230, padding: 15, strokeColor: '#2196F3',
+            showCharacter: (curStep < 3), characterOutlineColor: (curStep === 2 ? '#eee' : 'transparent')
         });
         if(curStep === 1) writer.animateCharacter();
 
         writer.quiz({
             onComplete: () => {
-                if(curCharIdx < chars.length - 1) {
-                    curCharIdx++;
-                } else {
-                    curCharIdx = 0;
-                    if(curStep < 3) curStep++; else { curStep = 1; curIdx = (curIdx + 1) % rawData.length; }
-                }
-                setTimeout(initLearn, 500);
+                setTimeout(() => {
+                    if(curCharIdx < chars.length - 1) {
+                        curCharIdx++;
+                    } else {
+                        curCharIdx = 0;
+                        if(curStep < 3) curStep++; else { curStep = 1; curIdx = (curIdx + 1) % vocab.length; }
+                    }
+                    loadLearn();
+                }, 400);
             }
         });
     }
 
-    function changeWord(n) { 
-        curIdx = (curIdx + n + rawData.length) % rawData.length; 
-        curStep = 1; curCharIdx = 0; 
-        initLearn(); 
-    }
+    function changeWord(n) { curIdx = (curIdx + n + vocab.length) % vocab.length; curStep = 1; curCharIdx = 0; loadLearn(); }
 
-    function initQuiz() {
-        const quizList = rawData.filter(d => progress[d.id] < 10).sort(() => Math.random() - 0.5);
-        if(!quizList.length) return alert("Bạn đã thuộc hết từ!");
+    function loadQuiz() {
+        const quizList = vocab.filter(v => progress[v.id] < 10).sort(() => Math.random() - 0.5);
+        if(!quizList.length) { alert("Xong!"); return switchTab('tab-list'); }
         
         const item = quizList[0];
         const chars = Array.from(item.char);
@@ -144,29 +149,29 @@
         document.getElementById('q-meaning').innerText = item.meaning;
         
         document.getElementById('quiz-target').innerHTML = '';
-        writer = Hanzi Writer.create('quiz-target', chars[curCharIdx], {
-            width: 250, height: 250, padding: 15, showCharacter: false
+        writer = HanziWriter.create('quiz-target', chars[curCharIdx], {
+            width: 230, height: 230, padding: 15, showCharacter: false, strokeColor: '#4CAF50'
         });
+
         writer.quiz({
             onComplete: () => {
-                if(curCharIdx < chars.length - 1) {
-                    curCharIdx++;
-                    initQuiz();
-                } else {
-                    progress[item.id]++;
-                    localStorage.setItem('hsk_data_v2', JSON.stringify(progress));
-                    curCharIdx = 0;
-                    initQuiz();
-                }
+                setTimeout(() => {
+                    if(curCharIdx < chars.length - 1) {
+                        curCharIdx++;
+                        loadQuiz();
+                    } else {
+                        progress[item.id]++;
+                        localStorage.setItem('hsk_study_v4', JSON.stringify(progress));
+                        curCharIdx = 0;
+                        loadQuiz();
+                    }
+                }, 400);
             }
         });
     }
 
-    // Tự khởi động
-    window.onload = () => {
-        console.log("App đã sẵn sàng");
-        renderList();
-    };
+    // Khởi tạo danh sách khi vừa vào trang
+    window.onload = renderList;
 </script>
 </body>
 </html>
