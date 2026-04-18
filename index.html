@@ -4,76 +4,51 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Dearlily Master Final</title>
+    <title>Hanzi Master Pro</title>
     <b:skin><![CDATA[
-        /* Theme Pastel Modern */
-        :root { 
-            --bg: #fdfaf2; 
-            --card: #ffffff; 
-            --p-red: #ffb7b7; 
-            --p-blue: #b4d4ff; 
-            --p-green: #9cc34a; 
-            --p-yellow: #ffecb3; 
-            --text: #5d5246; 
-            --grid: #e0d8c3;
-        }
-        body { background: var(--bg); margin: 0; padding: 10px; font-family: -apple-system, sans-serif; color: var(--text); touch-action: none; }
-        .app-container { max-width: 420px; margin: 10px auto; background: var(--card); padding: 25px 15px; border-radius: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); text-align: center; position: relative; }
+        :root { --bg: #fdfaf2; --text: #5d5246; --accent: #9cc34a; }
+        body { background: var(--bg); margin: 0; padding: 10px; font-family: -apple-system, sans-serif; }
+        .app-container { max-width: 420px; margin: auto; background: #fff; padding: 25px; border-radius: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); text-align: center; }
+        .energy-tag { background: #ffecb3; padding: 5px 15px; border-radius: 50px; font-weight: bold; font-size: 14px; margin-bottom: 20px; display: inline-block; }
         
-        .energy-tag { background: var(--p-yellow); padding: 6px 18px; border-radius: 50px; font-weight: 800; font-size: 14px; color: #8a6d3b; margin-bottom: 15px; display: inline-block; }
-        
-        .btn { width: 100%; padding: 16px; border-radius: 20px; border: none; font-weight: 800; font-size: 14px; margin-bottom: 10px; cursor: pointer; color: #fff; text-transform: uppercase; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
-        .btn-learn { background: var(--p-green); }
-        .btn-review { background: var(--p-blue); }
-        .btn-test { background: var(--p-red); }
-        .btn-sync { background: #f0f2f5; color: #adb5bd; font-size: 11px; padding: 10px; border-radius: 15px; margin-bottom: 20px; width: 100%; border: none; }
-
-        .library-section { margin-top: 20px; text-align: left; border-top: 2px dashed #eee; padding-top: 15px; }
-        .vocab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .vocab-card { background: #fff; padding: 12px 5px; border-radius: 15px; border: 1px solid #f3f3f3; text-align: center; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .vocab-card .hz { font-size: 22px; display: block; }
-        .vocab-card .lv { font-size: 9px; font-weight: bold; color: #fff; background: #d1d1d1; padding: 2px 6px; border-radius: 8px; position: absolute; top: -5px; right: -5px; }
-
-        /* Canvas 2 Layer */
-        .writer-wrapper { 
+        /* Container Layer */
+        .writer-box { 
             position: relative; width: 300px; height: 300px; margin: 20px auto; 
-            background: #fff; border-radius: 25px; border: 2px solid #eee;
-            background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background: #fff; border-radius: 20px; border: 2px solid #f0f0f0;
+            background-image: linear-gradient(#e0d8c3 1px, transparent 1px), linear-gradient(90deg, #e0d8c3 1px, transparent 1px);
             background-size: 50% 50%;
         }
         .layer { position: absolute; inset: 0; }
-        #layer-anim { z-index: 1; opacity: 0.25; pointer-events: none; } /* Layer mờ hướng dẫn */
-        #layer-quiz { z-index: 2; } /* Layer mực vẽ tay */
+        #layer-target { z-index: 1; opacity: 0.2; } /* Chữ mờ layer dưới */
+        #layer-quiz { z-index: 2; } /* Nét vẽ của bạn layer trên */
+        
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn { padding: 15px; border-radius: 15px; border: none; font-weight: bold; color: white; cursor: pointer; }
+        .btn-l { background: #9cc34a; }
+        .btn-r { background: #b4d4ff; }
+        .btn-t { background: #ffb7b7; }
     ]]></b:skin>
 </head>
 <body>
     <b:section id='content'>
-        <b:widget id='Text1' locked='false' title='App Content' type='Text'>
+        <b:widget id='Text1' locked='false' type='Text'>
             <b:includable id='main'>
                 <div class='app-container'>
-                    <div class='energy-tag'>⚡ <span id='e-ui'>--</span></div>
+                    <div class='energy-tag'>⚡ <span id='e-ui'>20</span></div>
                     
-                    <div id='home'>
-                        <h2 style='font-weight: 200; margin: 10px 0;'>DEARLILY MASTER</h2>
-                        <button id='sync-btn' class='btn-sync' onclick="manualSync()">ĐỒNG BỘ CLOUD</button>
-                        <button class='btn btn-learn' onclick="go('learn')">Học từ mới</button>
-                        <button class='btn btn-review' onclick="go('review')">Ôn tập</button>
-                        <button class='btn btn-test' onclick="go('test')">Kiểm tra</button>
-                        
-                        <div class='library-section'>
-                            <div style="font-size:12px; font-weight:900; color:#adb5bd">THƯ VIỆN</div>
-                            <div id='vocab-list' class='vocab-grid'></div>
-                        </div>
-                    </div>
-
-                    <div id='work' style='display:none'>
-                        <h1 id='mean' style='margin:10px 0; font-size:30px; font-weight:200;'></h1>
-                        <div class='writer-wrapper'>
-                            <div id='layer-anim' class='layer'></div>
+                    <div id='work-area'>
+                        <h1 id='mean' style='font-weight: 200; margin: 10px 0;'>学 - Học</h1>
+                        <div class='writer-box'>
+                            <div id='layer-target' class='layer'></div>
                             <div id='layer-quiz' class='layer'></div>
                         </div>
-                        <div id='msg' style="font-size:13px; min-height:20px; color:#9cc34a; font-weight:bold"></div>
-                        <button onclick='location.reload()' style='background:none; border:none; color:#ccc; text-decoration:underline; font-size:12px; margin-top:20px'>THOÁT</button>
+                        <div id='status' style='color: var(--accent); font-weight: bold; min-height: 20px;'></div>
+                        
+                        <div class='btn-group'>
+                            <button class='btn btn-l' onclick="start('学')">HỌC</button>
+                            <button class='btn btn-r' onclick="writer.animateCharacter()">XEM</button>
+                            <button class='btn btn-t' onclick="location.reload()">THOÁT</button>
+                        </div>
                     </div>
                 </div>
             </b:includable>
@@ -81,99 +56,44 @@
     </b:section>
 
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script type="text/javascript">
-    //<![CDATA[
-        const URL = "https://script.google.com/macros/s/AKfycbz8deLRsCsrCilV6szyll_8rormYhGQVgtgvXuQG5c0_P_gLBRabZKVPd2LRVP0AhxUpQ/exec";
-        let db = JSON.parse(localStorage.getItem('hz_local_v12')) || { user: {energy: 20}, vocabs: [{hanzi:"你",nghia:"Bạn",total:1},{hanzi:"好",nghia:"Tốt",total:1},{hanzi:"学",nghia:"Học",total:0}] };
-
-        function ui() {
-            document.getElementById('e-ui').innerText = Math.max(0, Math.floor(db.user.energy));
-            localStorage.setItem('hz_local_v12', JSON.stringify(db));
-            const list = document.getElementById('vocab-list');
-            if(list) {
-                list.innerHTML = '';
-                db.vocabs.slice().reverse().slice(0, 15).forEach(v => {
-                    list.innerHTML += `<div class="vocab-card"><span class="lv">Lv.${v.total||0}</span><span class="hz">${v.hanzi}</span></div>`;
-                });
-            }
-        }
-
-        async function manualSync() {
-            const btn = document.getElementById('sync-btn');
-            btn.innerText = "⏳ ĐANG LƯU...";
-            try {
-                await fetch(URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(db) });
-                btn.innerText = "✅ HOÀN TẤT";
-                setTimeout(() => btn.innerText = "ĐỒNG BỘ CLOUD", 2000);
-            } catch(e) { btn.innerText = "LỖI KẾT NỐI"; }
-        }
-
-        let st = { mode: '', q: [], idx: 0, ph: 1 };
-        function go(m) {
-            if(db.user.energy < 5) return alert("Cần tối thiểu 5⚡ để bắt đầu!");
-            st.mode = m; st.idx = 0; st.ph = (m === 'test') ? 3 : 1;
-            st.q = db.vocabs.filter(v => m === 'learn' ? (v.total||0)===0 : (v.total||0)>0).sort(()=>Math.random()-0.5).slice(0,3);
-            if(!st.q.length) st.q = db.vocabs.slice(0,3);
-            document.getElementById('home').style.display='none';
-            document.getElementById('work').style.display='block';
-            draw();
-        }
-
-        function draw() {
-            const containerAnim = document.getElementById('layer-anim');
-            const containerQuiz = document.getElementById('layer-quiz');
-            containerAnim.innerHTML = ''; containerQuiz.innerHTML = '';
+    <script>
+        let writer;
+        
+        function start(char) {
+            document.getElementById('layer-target').innerHTML = '';
+            document.getElementById('layer-quiz').innerHTML = '';
             
-            const w = st.q[st.idx];
-            document.getElementById('mean').innerText = w.nghia;
-            document.getElementById('msg').innerText = st.ph === 3 ? "Tự viết từ trí nhớ!" : "Đồ theo nét mờ phía dưới";
+            // 1. Tạo lớp chữ mờ nằm dưới
+            HanziWriter.create('layer-target', char, {
+                width: 300, height: 300, padding: 30,
+                showOutline: true, strokeColor: '#000'
+            });
 
-            // 1. Layer hướng dẫn (Nét mờ) - Luôn hiện ở giai đoạn 1 và 2
-            if (st.ph !== 3) {
-                HanziWriter.create('layer-anim', w.hanzi, {
-                    width: 300, height: 300, padding: 30,
-                    strokeColor: '#ddd',
-                    showOutline: true
-                });
-            }
-
-            // 2. Layer Quiz (GIỮ NÉT VẼ TAY)
-            const quiz = HanziWriter.create('layer-quiz', w.hanzi, {
+            // 2. Tạo lớp Quiz nằm trên để bắt nét vẽ
+            writer = HanziWriter.create('layer-quiz', char, {
                 width: 300, height: 300, padding: 30,
                 showOutline: false,
-                drawingColor: '#444',      // Màu mực vẽ tay
-                drawingWidth: 35,          // Độ dày nét vẽ cho giống video
-                drawingFadeDuration: 0,    // GIỮ NÉT VẼ KHÔNG BIẾN MẤT
                 showCharacter: false,
-                lenience: 1.8
+                // ĐẶC BIỆT CẦN THIẾT:
+                drawingColor: '#333',         // Màu mực bạn đang vẽ
+                drawingWidth: 25,             // Độ dày mực
+                drawingFadeDuration: 0,       // GIỮ NÉT VẼ TAY LẠI (Không cho phai đi)
+                highlightCompleteColor: '#333', // Giữ màu đen khi hoàn thành nét
+                strokeHighlightSpeed: 0,      // Không cho máy vẽ đè lên
+                lenience: 1.5
             });
 
-            quiz.quiz({
-                onComplete: () => {
-                    db.user.energy += 1; ui();
-                    confetti({ particleCount: 25, spread: 60, origin: { y: 0.8 } });
-                    setTimeout(next, 800);
+            writer.quiz({
+                onCorrectStroke: (data) => {
+                    document.getElementById('status').innerText = "Đúng rồi!";
+                },
+                onComplete: (data) => {
+                    document.getElementById('status').innerText = "Hoàn thành!";
                 }
             });
-
-            if (st.ph === 1) quiz.animateCharacter();
         }
 
-        function next() {
-            if (st.ph === 3 || st.mode === 'test') {
-                const target = db.vocabs.find(v => v.hanzi === st.q[st.idx].hanzi);
-                if(target) target.total = (target.total || 0) + 1;
-                st.idx++; st.ph = (st.mode === 'test') ? 3 : 1;
-                if(st.idx < st.q.length) draw();
-                else location.reload();
-            } else {
-                st.ph++; draw();
-            }
-        }
-
-        window.onload = ui;
-    //]]>
+        window.onload = () => start('学');
     </script>
 </body>
 </html>
