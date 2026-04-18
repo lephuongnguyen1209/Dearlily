@@ -3,116 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Học Tiếng Trung</title>
+    <title>HSK Study App</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
         :root { --primary: #5c4b37; --bg: #fdf6e3; --accent: #2196F3; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--primary); overflow-x: hidden; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--primary); }
         
-        nav { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        nav button { flex: 1; border: none; background: none; padding: 15px 0; font-size: 14px; color: #888; cursor: pointer; outline: none; }
-        nav button.active { color: var(--accent); font-weight: bold; border-top: 3px solid var(--accent); }
+        /* Menu Bottom */
+        nav { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #ddd; z-index: 9999; }
+        nav button { flex: 1; border: none; background: none; padding: 15px 0; font-size: 16px; color: #888; cursor: pointer; }
+        nav button.active { color: var(--accent); font-weight: bold; border-top: 4px solid var(--accent); }
 
-        .container { display: none; max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .container { display: none; padding: 20px; max-width: 500px; margin: 0 auto; }
         .container.active { display: block; }
 
-        .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .card { background: #fff; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        .card b { font-size: 32px; display: block; margin-bottom: 5px; }
-        .card p { margin: 0; color: #d32f2f; font-weight: bold; }
-
-        .drawing-area { background: #fff; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        #writer-target, #quiz-target { background: #fff; border: 2px solid #eee; border-radius: 10px; display: inline-block; margin: 15px 0; }
-        .pinyin-display { font-size: 32px; color: #d32f2f; font-weight: bold; }
+        /* Card hiển thị */
+        .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card { background: #fff; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card b { font-size: 30px; display: block; }
         
-        .btn-group { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
-        .btn { padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-blue { background: var(--accent); color: white; }
-        .btn-gray { background: #eee; color: #666; }
+        #writer-target, #quiz-target { background: #fff; border: 2px solid #ddd; border-radius: 10px; display: inline-block; margin: 15px 0; }
+        .pinyin { font-size: 30px; color: #d32f2f; font-weight: bold; }
+        .controls { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        button.btn { padding: 10px 20px; border-radius: 20px; border: none; background: var(--accent); color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="tab-list" class="container active">
-    <h2 style="text-align:center; margin-top: 10px;">33 từ vựng đã nạp</h2>
+    <h2 style="text-align:center">33 từ vựng đã nạp</h2>
     <div id="list-render" class="vocab-grid"></div>
 </div>
 
 <div id="tab-learn" class="container">
-    <div class="drawing-area">
-        <div id="step-label" style="color:var(--accent); font-weight:bold; margin-bottom:5px"></div>
-        <div class="pinyin-display" id="l-pinyin"></div>
-        <div id="l-meaning" style="font-size:16px; color:#666; margin-bottom:10px"></div>
+    <div style="background:#fff; padding:20px; border-radius:20px; text-align:center;">
+        <div id="step-label" style="color:var(--accent); font-weight:bold"></div>
+        <div class="pinyin" id="l-pinyin"></div>
+        <div id="l-meaning" style="color:#666"></div>
         <div id="writer-target"></div>
-        <div class="btn-group">
-            <button class="btn btn-gray" onclick="changeWord(-1)">Trước</button>
-            <button class="btn btn-blue" onclick="changeWord(1)">Tiếp/Bỏ qua</button>
+        <div class="controls">
+            <button class="btn" style="background:#999" onclick="changeWord(-1)">Trở lại</button>
+            <button class="btn" onclick="changeWord(1)">Tiếp theo</button>
         </div>
     </div>
 </div>
 
 <div id="tab-quiz" class="container">
-    <div class="drawing-area">
-        <p id="quiz-info" style="color:#888; margin: 0;"></p>
-        <div class="pinyin-display" id="q-pinyin"></div>
-        <div id="q-meaning" style="font-size:16px; color:#666; margin-bottom:10px"></div>
+    <div style="background:#fff; padding:20px; border-radius:20px; text-align:center;">
+        <div class="pinyin" id="q-pinyin"></div>
+        <div id="q-meaning" style="color:#666"></div>
         <div id="quiz-target"></div>
     </div>
 </div>
 
 <nav>
-    <button onclick="switchTab('tab-list')" id="nav-tab-list" class="active">Từ vựng</button>
-    <button onclick="switchTab('tab-learn')" id="nav-tab-learn">Học tập</button>
-    <button onclick="switchTab('tab-quiz')" id="nav-tab-quiz">Ôn tập</button>
+    <button onclick="changeTab('tab-list')" id="nav-tab-list" class="active">Từ vựng</button>
+    <button onclick="changeTab('tab-learn')" id="nav-tab-learn">Học tập</button>
+    <button onclick="changeTab('tab-quiz')" id="nav-tab-quiz">Ôn tập</button>
 </nav>
 
 <script>
-    const vocabData = [
+    // Dữ liệu mẫu (Bạn có thể thêm tiếp)
+    const rawData = [
         { id: 1, char: '你', pinyin: 'nǐ', meaning: 'Bạn' },
-        { id: 2, char: '好', pinyin: 'hǎo', meaning: 'Tốt, khỏe' },
-        { id: 3, char: '邮局', pinyin: 'yóujú', meaning: 'Bưu điện' },
-        { id: 4, char: '寄', pinyin: 'jì', meaning: 'Gửi' },
-        { id: 5, char: '信', pinyin: 'xìn', meaning: 'Thư' },
-        { id: 6, char: '银行', pinyin: 'yínháng', meaning: 'Ngân hàng' },
-        { id: 7, char: '取', pinyin: 'qǔ', meaning: 'Rút (tiền)' },
-        { id: 8, char: '钱', pinyin: 'qián', meaning: 'Tiền' },
-        { id: 9, char: '明天', pinyin: 'míngtiān', meaning: 'Ngày mai' },
-        { id: 10, char: '见', pinyin: 'jiàn', meaning: 'Gặp' },
-        { id: 11, char: '英语', pinyin: 'yīngyǔ', meaning: 'Tiếng Anh' },
-        { id: 12, char: '对', pinyin: 'duì', meaning: 'Đúng' }
+        { id: 2, char: '好', pinyin: 'hǎo', meaning: 'Tốt' },
+        { id: 3, char: '银行', pinyin: 'yínháng', meaning: 'Ngân hàng' },
+        { id: 4, char: '邮局', pinyin: 'yóujú', meaning: 'Bưu điện' },
+        { id: 5, char: '明天', pinyin: 'míngtiān', meaning: 'Ngày mai' }
     ];
 
-    let progress = JSON.parse(localStorage.getItem('study_data')) || {};
-    vocabData.forEach(d => { if(!progress[d.id]) progress[d.id] = 0; });
+    let progress = JSON.parse(localStorage.getItem('hsk_data_v2')) || {};
+    rawData.forEach(d => { if(!progress[d.id]) progress[d.id] = 0; });
 
     let curIdx = 0, curStep = 1, curCharIdx = 0, writer;
 
-    function switchTab(id) {
-        document.querySelectorAll('.container').forEach(t => t.classList.remove('active'));
+    // Hàm chuyển Tab
+    function changeTab(id) {
+        console.log("Chuyển sang tab:", id);
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        
         document.getElementById(id).classList.add('active');
         document.getElementById('nav-' + id).classList.add('active');
-        window.scrollTo(0,0);
+
         if(id === 'tab-list') renderList();
-        if(id === 'tab-learn') { curCharIdx = 0; loadLearn(); }
-        if(id === 'tab-quiz') { curCharIdx = 0; loadQuiz(); }
+        if(id === 'tab-learn') { curCharIdx = 0; initLearn(); }
+        if(id === 'tab-quiz') { curCharIdx = 0; initQuiz(); }
     }
 
     function renderList() {
-        const renderArea = document.getElementById('list-render');
-        if(!renderArea) return;
-        renderArea.innerHTML = vocabData.map(d => `
+        document.getElementById('list-render').innerHTML = rawData.map(d => `
             <div class="card">
                 <b>${d.char}</b>
                 <p>${d.pinyin}</p>
-                <small style="color:#888">⭐ ${progress[d.id]}/10</small>
+                <small>⭐ ${progress[d.id]}/10</small>
             </div>
         `).join('');
     }
 
-    function loadLearn() {
-        const item = vocabData[curIdx];
+    function initLearn() {
+        const item = rawData[curIdx];
         const chars = Array.from(item.char);
         document.getElementById('l-pinyin').innerText = item.pinyin;
         document.getElementById('l-meaning').innerText = item.meaning;
@@ -120,50 +110,63 @@
         
         document.getElementById('writer-target').innerHTML = '';
         writer = Hanzi Writer.create('writer-target', chars[curCharIdx], {
-            width: 220, height: 220, padding: 15, strokeColor: '#2196F3',
+            width: 250, height: 250, padding: 15,
             showCharacter: (curStep < 3), characterOutlineColor: (curStep === 2 ? '#ddd' : 'transparent')
         });
         if(curStep === 1) writer.animateCharacter();
 
         writer.quiz({
             onComplete: () => {
-                setTimeout(() => {
-                    if(curCharIdx < chars.length - 1) { curCharIdx++; loadLearn(); } 
-                    else { curCharIdx = 0; if(curStep < 3) curStep++; else { curStep = 1; curIdx = (curIdx + 1) % vocabData.length; } loadLearn(); }
-                }, 400);
+                if(curCharIdx < chars.length - 1) {
+                    curCharIdx++;
+                } else {
+                    curCharIdx = 0;
+                    if(curStep < 3) curStep++; else { curStep = 1; curIdx = (curIdx + 1) % rawData.length; }
+                }
+                setTimeout(initLearn, 500);
             }
         });
     }
 
-    function changeWord(n) { curIdx = (curIdx + n + vocabData.length) % vocabData.length; curStep = 1; curCharIdx = 0; loadLearn(); }
+    function changeWord(n) { 
+        curIdx = (curIdx + n + rawData.length) % rawData.length; 
+        curStep = 1; curCharIdx = 0; 
+        initLearn(); 
+    }
 
-    function loadQuiz() {
-        const quizItems = vocabData.filter(d => progress[d.id] < 10).sort(() => Math.random() - 0.5);
-        if(!quizItems.length) { alert("Bạn đã thuộc hết!"); return switchTab('tab-list'); }
+    function initQuiz() {
+        const quizList = rawData.filter(d => progress[d.id] < 10).sort(() => Math.random() - 0.5);
+        if(!quizList.length) return alert("Bạn đã thuộc hết từ!");
         
-        const item = quizItems[0];
+        const item = quizList[0];
         const chars = Array.from(item.char);
         document.getElementById('q-pinyin').innerText = item.pinyin;
         document.getElementById('q-meaning').innerText = item.meaning;
-        document.getElementById('quiz-info').innerText = `Chữ ${curCharIdx + 1}/${chars.length}`;
         
         document.getElementById('quiz-target').innerHTML = '';
         writer = Hanzi Writer.create('quiz-target', chars[curCharIdx], {
-            width: 220, height: 220, padding: 15, showCharacter: false, strokeColor: '#4CAF50'
+            width: 250, height: 250, padding: 15, showCharacter: false
         });
-
         writer.quiz({
             onComplete: () => {
-                setTimeout(() => {
-                    if(curCharIdx < chars.length - 1) { curCharIdx++; loadQuiz(); } 
-                    else { progress[item.id]++; localStorage.setItem('study_data', JSON.stringify(progress)); curCharIdx = 0; loadQuiz(); }
-                }, 400);
+                if(curCharIdx < chars.length - 1) {
+                    curCharIdx++;
+                    initQuiz();
+                } else {
+                    progress[item.id]++;
+                    localStorage.setItem('hsk_data_v2', JSON.stringify(progress));
+                    curCharIdx = 0;
+                    initQuiz();
+                }
             }
         });
     }
 
-    // Chạy ngay khi tải trang
-    window.onload = renderList;
+    // Tự khởi động
+    window.onload = () => {
+        console.log("App đã sẵn sàng");
+        renderList();
+    };
 </script>
 </body>
 </html>
