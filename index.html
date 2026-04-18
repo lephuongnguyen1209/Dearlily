@@ -3,115 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dearlily Hanzi Master</title>
+    <title>Dearlily Master</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
         :root {
-            --bg: #f8f9fa;
-            --card: #ffffff;
-            --energy-bg: #fff9db;
-            --energy-text: #fab005;
-            --btn-learn: #c3e6cb;
-            --btn-review: #bcd4f3;
-            --btn-test: #f5b7b1;
-            --text: #495057;
+            --hc-green: #9cc34a; /* Màu đặc trưng HelloChinese */
+            --hc-bg: #fdfaf2;    /* Nền kem nhạt trong video */
+            --grid-line: #e0d8c3;
         }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; color: var(--text); }
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background: var(--hc-bg); 
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden;
+        }
         
-        /* Năng lượng kiểu Capsule */
-        .energy-badge { background: var(--energy-bg); color: var(--energy-text); padding: 8px 25px; border-radius: 30px; font-weight: bold; font-size: 20px; margin-bottom: 40px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
-        .title { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 30px; color: #868e96; }
+        /* Header gọn nhẹ như video */
+        .top-bar {
+            width: 100%; padding: 10px 0;
+            display: flex; justify-content: space-around;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(5px);
+            font-weight: bold; color: #5d5246;
+        }
 
-        /* Nút bấm kiểu Card */
-        .main-btns { width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 15px; }
-        .btn { border: none; padding: 20px; border-radius: 20px; font-size: 16px; font-weight: bold; text-transform: uppercase; color: #5a6268; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        .btn-cloud { background: #f1f3f5; color: #adb5bd; font-size: 12px; padding: 10px; }
-        .btn-l { background: var(--btn-learn); }
-        .btn-r { background: var(--btn-review); }
-        .btn-t { background: var(--btn-test); }
+        /* Khung viết có lưới 2 Layer */
+        #writing-container {
+            position: relative;
+            width: 320px; height: 320px;
+            margin-top: 50px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            /* Tạo lưới ô vuông mờ phía dưới */
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(rgba(224, 216, 195, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(224, 216, 195, 0.3) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 50% 50%, 50% 50%;
+        }
 
-        /* Khung vẽ ẩn đi khi ở ngoài màn hình chính */
-        #draw-area { display: none; width: 100%; flex-direction: column; align-items: center; }
-        #grid-canvas { background: white; border-radius: 25px; margin: 20px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        /* Thông tin từ vựng */
+        .word-info {
+            margin-top: 20px; text-align: center;
+            color: #5d5246;
+        }
+        .meaning { font-size: 18px; font-weight: 500; margin-bottom: 5px; }
 
-        /* Thư viện từ vựng */
-        .library-section { width: 100%; max-width: 350px; margin-top: 40px; border-top: 2px dashed #dee2e6; padding-top: 20px; }
-        .lib-title { font-size: 14px; font-weight: bold; color: #adb5bd; margin-bottom: 15px; text-transform: uppercase; }
-        .word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .word-card { background: white; padding: 15px; border-radius: 15px; text-align: center; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .word-card .char { font-size: 24px; }
-        .word-card .lv { position: absolute; top: -5px; right: -5px; background: #ced4da; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+        /* Nút bấm tròn, đổ bóng nhẹ */
+        .bottom-nav {
+            position: fixed; bottom: 30px;
+            width: 90%; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+        }
+        .btn {
+            border: none; padding: 18px 0; border-radius: 50px;
+            font-weight: bold; font-size: 14px;
+            color: white; box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: 0.1s;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        .btn-l { background: #9cc34a; }
+        .btn-r { background: #64b5f6; }
+        .btn-t { background: #ff8a65; }
+
+        /* Hiệu ứng ẩn hiện */
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="home-screen">
-        <div class="energy-badge">⚡ <span id="energy-val">17</span></div>
-        <div class="title">DEARLILY MASTER</div>
+<div class="top-bar">
+    <span>⚡ <span id="energy-display">17</span></span>
+    <span>Level: <span id="lv-display">0</span></span>
+</div>
+
+<div class="word-info">
+    <div class="meaning" id="meaning-txt">SỐ TÁM (BĀ)</div>
+</div>
+
+<div id="writing-container">
+    <div id="grid-canvas"></div>
+</div>
+
+<div class="bottom-nav">
+    <button class="btn btn-l" onclick="changeMode('learn')">HỌC</button>
+    <button class="btn btn-r" onclick="changeMode('review')">ÔN TẬP</button>
+    <button class="btn btn-t" onclick="changeMode('test')">KIỂM TRA</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD5rrTKwBjfGT-M6vVl2RJEM5o7Y2vCOJo",
+        authDomain: "dearlily-8d71f.firebaseapp.com",
+        databaseURL: "https://dearlily-8d71f-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "dearlily-8d71f",
+        appId: "1:517365172899:web:48e3efa1651159b412cd16"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const userRef = ref(db, 'userData');
+
+    let writer;
+    let currentMode = 'learn';
+    let currentWord = '八'; // Từ trong video của bạn
+
+    // Load dữ liệu
+    onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            document.getElementById('energy-display').innerText = data.energy;
+            document.getElementById('lv-display').innerText = data.words[currentWord]?.lv || 0;
+        }
+    });
+
+    window.changeMode = (mode) => {
+        currentMode = mode;
+        initWriter(currentWord);
+    };
+
+    function initWriter(word) {
+        document.getElementById('grid-canvas').innerHTML = '';
         
-        <div class="main-btns">
-            <button class="btn btn-cloud">ĐỒNG BỘ LÊN CLOUD</button>
-            <button class="btn btn-l" onclick="startApp('learn')">LEARN (3 BƯỚC)</button>
-            <button class="btn btn-r" onclick="startApp('review')">REVIEW (3 BƯỚC)</button>
-            <button class="btn btn-t" onclick="startApp('test')">TEST (CHỈ VIẾT)</button>
-        </div>
-
-        <div class="library-section">
-            <div class="lib-title">THƯ VIỆN</div>
-            <div class="word-grid" id="word-list">
-                </div>
-        </div>
-    </div>
-
-    <div id="draw-area">
-        <div class="energy-badge">🌹 <span id="energy-draw">0</span></div>
-        <div id="grid-canvas"></div>
-        <div id="msg" style="text-align:center; font-weight:bold; color:#868e96"></div>
-        <button class="btn btn-cloud" style="margin-top:20px" onclick="location.reload()">QUAY LẠI</button>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD5rrTKwBjfGT-M6vVl2RJEM5o7Y2vCOJo",
-            authDomain: "dearlily-8d71f.firebaseapp.com",
-            databaseURL: "https://dearlily-8d71f-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "dearlily-8d71f",
-            appId: "1:517365172899:web:48e3efa1651159b412cd16"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const userRef = ref(db, 'userData');
-
-        let userData = { energy: 17, words: { "学": { lv: 0, mstr: false } } };
-
-        onValue(userRef, (snapshot) => {
-            if (snapshot.exists()) {
-                userData = snapshot.val();
-                document.getElementById('energy-val').innerText = userData.energy;
-                renderLibrary();
-            }
+        writer = HanziWriter.create('grid-canvas', word, {
+            width: 320, height: 320, padding: 20,
+            showOutline: true,
+            strokeColor: '#333', // Màu nét vẽ
+            outlineColor: '#eee', // Nét mờ tầng dưới
+            drawingColor: '#9cc34a', // Nét đang vẽ màu xanh như video
+            drawingWidth: 25, // Độ dày nét vẽ cho giống video
+            showCharacter: (currentMode === 'learn'), // Chỉ hiện chữ mẫu khi ở mode Learn
         });
 
-        function renderLibrary() {
-            const list = document.getElementById('word-list');
-            list.innerHTML = '';
-            for (let char in userData.words) {
-                list.innerHTML += `<div class="word-card"><div class="lv">Lv.${userData.words[char].lv}</div><div class="char">${char}</div></div>`;
+        writer.quiz({
+            onComplete: () => {
+                alert("Xuất sắc! Bạn đã hoàn thành chữ này.");
+                // Logic cộng điểm/level ở đây
             }
-        }
+        });
+    }
 
-        window.startApp = (mode) => {
-            document.getElementById('home-screen').style.display = 'none';
-            document.getElementById('draw-area').style.display = 'flex';
-            document.getElementById('energy-draw').innerText = userData.energy;
-            // Ở đây sẽ chạy tiếp logic Hanzi Writer như code cũ...
-        };
-    </script>
+    // Khởi tạo lần đầu
+    initWriter(currentWord);
+
+</script>
 </body>
 </html>
