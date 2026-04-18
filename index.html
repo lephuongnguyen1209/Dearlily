@@ -3,69 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dearlily Master</title>
+    <title>Dearlily Hanzi Master</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
-        :root { --hc-bg: #fdfaf2; --grid-line: #e0d8c3; }
-        body { font-family: -apple-system, sans-serif; background: var(--hc-bg); margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        :root { --bg: #fdfaf2; --hc-green: #9cc34a; --text: #5d5246; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; color: var(--text); }
         
-        .top-bar { width: 100%; padding: 15px 0; display: flex; justify-content: space-around; background: #fff; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        /* Giao diện Header */
+        .header { width: 100%; padding: 15px 0; background: #fff; display: flex; justify-content: space-around; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-        #writing-container {
-            position: relative; width: 320px; height: 320px; margin-top: 40px;
-            background: #fff; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: 50% 50%;
-        }
+        /* Khung viết */
+        #writing-area { display: none; flex-direction: column; align-items: center; width: 100%; }
+        #grid-canvas { background: white; border-radius: 20px; margin: 20px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
-        .bottom-nav { position: fixed; bottom: 30px; width: 90%; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .btn { border: none; padding: 18px; border-radius: 50px; font-weight: bold; color: white; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
-        .btn-l { background: #9cc34a; }
-        .btn-reset { background: #ff8a65; }
+        /* Danh sách từ vựng */
+        .lib-container { width: 90%; max-width: 400px; margin-top: 20px; }
+        .word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .word-card { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); font-size: 24px; cursor: pointer; }
+
+        .btn-back { margin-top: 20px; padding: 10px 25px; border-radius: 20px; border: none; background: #eee; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <span>⚡ <span id="energy">17</span></span>
-    <span>Mode: LEARN</span>
-</div>
+    <div id="home-screen" class="lib-container">
+        <div style="font-size: 20px; font-weight: bold;">DANH SÁCH TỪ VỰNG</div>
+        <div class="word-grid" id="word-list">
+            </div>
+    </div>
 
-<div id="writing-container">
-    <div id="grid-canvas"></div>
-</div>
-
-<div class="bottom-nav">
-    <button class="btn btn-l" onclick="writer.animateCharacter()">XEM MẪU</button>
-    <button class="btn btn-reset" onclick="initWriter('西')">VIẾT LẠI</button>
-</div>
+    <div id="writing-area">
+        <div class="header">
+            <span onclick="goBack()" style="cursor:pointer">← Thoát</span>
+            <span id="current-char-display">Đang học</span>
+            <span>⚡ 17</span>
+        </div>
+        <div id="grid-canvas"></div>
+        <div id="msg" style="font-weight: bold; color: var(--hc-green);">Hãy đồ theo nét mờ</div>
+        <button class="btn-back" onclick="writer.animateCharacter()">XEM GỢI Ý</button>
+    </div>
 
 <script>
-    var writer;
-    function initWriter(word) {
-        document.getElementById('grid-canvas').innerHTML = '';
-        writer = HanziWriter.create('grid-canvas', word, {
-            width: 320, height: 320, padding: 20,
-            showOutline: true,
-            strokeColor: '#000',      // Nét máy vẽ (khi bấm Xem mẫu)
-            outlineColor: '#eee',     // Nét mờ layer dưới
-            drawingColor: '#333',     // MÀU NÉT VẼ TAY CỦA BẠN
-            drawingWidth: 20,         // Độ dày nét vẽ tay
-            showCharacter: false      // Không hiện chữ đen ban đầu để bạn tự viết
-        });
+    const myWords = [
+        { char: '你', pinyin: 'nǐ', mean: 'Bạn' },
+        { char: '好', pinyin: 'hǎo', mean: 'Tốt' },
+        { char: '一', pinyin: 'yī', mean: 'Số 1' },
+        { char: '八', pinyin: 'bā', mean: 'Số 8' },
+        { char: '西', pinyin: 'xī', mean: 'Tây' },
+        { char: '学', pinyin: 'xué', mean: 'Học' }
+    ];
+
+    let writer;
+
+    // Hiển thị danh sách từ
+    const listDiv = document.getElementById('word-list');
+    myWords.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'word-card';
+        card.innerText = item.char;
+        card.onclick = () => startWriting(item.char);
+        listDiv.appendChild(card);
+    });
+
+    function startWriting(char) {
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('writing-area').style.display = 'flex';
+        document.getElementById('current-char-display').innerText = char;
         
-        // Kích hoạt chế độ QUIZ nhưng giữ lại nét vẽ (Highlight)
+        document.getElementById('grid-canvas').innerHTML = '';
+        writer = HanziWriter.create('grid-canvas', char, {
+            width: 300, height: 300, padding: 20,
+            showOutline: true,
+            strokeColor: '#000',      // Nét máy hiện ra khi "Xem gợi ý"
+            outlineColor: '#f0f0f0',  // Layer mờ bên dưới
+            drawingColor: '#333',     // MÀU NÉT VẼ TAY (Sẽ giữ nguyên trên màn hình)
+            drawingWidth: 20,
+            showCharacter: false      // Bắt đầu bằng khung trống để tự viết
+        });
+
         writer.quiz({
-            showHintAfterMisses: 1,
-            onMistake: function(strokeData) { console.log('Sai nét rồi!'); },
-            onCorrectStroke: function(strokeData) {
-                // Đây là chỗ quan trọng: Nét vẽ đúng sẽ được GIỮ NGUYÊN trên màn hình
+            onCorrectStroke: function(data) {
+                document.getElementById('msg').innerText = "Đúng rồi! Tiếp tục nào.";
+            },
+            onComplete: function() {
+                document.getElementById('msg').innerText = "Hoàn thành xuất sắc!";
             }
         });
     }
 
-    // Khởi tạo với chữ 西 (Tây) như trong ảnh của bạn
-    window.onload = function() { initWriter('西'); };
+    function goBack() {
+        document.getElementById('home-screen').style.display = 'block';
+        document.getElementById('writing-area').style.display = 'none';
+    }
 </script>
 </body>
 </html>
