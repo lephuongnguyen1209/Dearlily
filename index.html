@@ -1,99 +1,84 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html>
-<html b:css='false' b:defaultmessages='false' b:layouts='false' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/atom/ns#' xmlns:expr='http://www.google.com/2005/gml/expr'>
+<html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Hanzi Master Pro</title>
-    <b:skin><![CDATA[
-        :root { --bg: #fdfaf2; --text: #5d5246; --accent: #9cc34a; }
-        body { background: var(--bg); margin: 0; padding: 10px; font-family: -apple-system, sans-serif; }
-        .app-container { max-width: 420px; margin: auto; background: #fff; padding: 25px; border-radius: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); text-align: center; }
-        .energy-tag { background: #ffecb3; padding: 5px 15px; border-radius: 50px; font-weight: bold; font-size: 14px; margin-bottom: 20px; display: inline-block; }
-        
-        /* Container Layer */
-        .writer-box { 
-            position: relative; width: 300px; height: 300px; margin: 20px auto; 
-            background: #fff; border-radius: 20px; border: 2px solid #f0f0f0;
-            background-image: linear-gradient(#e0d8c3 1px, transparent 1px), linear-gradient(90deg, #e0d8c3 1px, transparent 1px);
-            background-size: 50% 50%;
-        }
-        .layer { position: absolute; inset: 0; }
-        #layer-target { z-index: 1; opacity: 0.2; } /* Chữ mờ layer dưới */
-        #layer-quiz { z-index: 2; } /* Nét vẽ của bạn layer trên */
-        
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn { padding: 15px; border-radius: 15px; border: none; font-weight: bold; color: white; cursor: pointer; }
-        .btn-l { background: #9cc34a; }
-        .btn-r { background: #b4d4ff; }
-        .btn-t { background: #ffb7b7; }
-    ]]></b:skin>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Viết Chữ Hán</title>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f4f4f9; padding-top: 50px; }
+        #target-kanji { background: white; border: 2px solid #333; border-radius: 8px; cursor: crosshair; }
+        .info { margin: 20px; text-align: center; }
+        .controls { display: flex; gap: 10px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; }
+        button:hover { background-color: #e0e0e0; }
+        .pinyin { font-size: 24px; color: #d32f2f; font-weight: bold; }
+        .meaning { font-size: 18px; color: #555; }
+    </style>
 </head>
 <body>
-    <b:section id='content'>
-        <b:widget id='Text1' locked='false' type='Text'>
-            <b:includable id='main'>
-                <div class='app-container'>
-                    <div class='energy-tag'>⚡ <span id='e-ui'>20</span></div>
-                    
-                    <div id='work-area'>
-                        <h1 id='mean' style='font-weight: 200; margin: 10px 0;'>学 - Học</h1>
-                        <div class='writer-box'>
-                            <div id='layer-target' class='layer'></div>
-                            <div id='layer-quiz' class='layer'></div>
-                        </div>
-                        <div id='status' style='color: var(--accent); font-weight: bold; min-height: 20px;'></div>
-                        
-                        <div class='btn-group'>
-                            <button class='btn btn-l' onclick="start('学')">HỌC</button>
-                            <button class='btn btn-r' onclick="writer.animateCharacter()">XEM</button>
-                            <button class='btn btn-t' onclick="location.reload()">THOÁT</button>
-                        </div>
-                    </div>
-                </div>
-            </b:includable>
-        </b:widget>
-    </b:section>
 
-    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <div class="info">
+        <div id="pinyin" class="pinyin">nǐ</div>
+        <div id="meaning" class="meaning">Bạn, anh, chị</div>
+    </div>
+
+    <div id="target-kanji"></div>
+
+    <div class="controls" style="margin-top: 20px;">
+        <button onclick="prevWord()">Trước</button>
+        <button onclick="writer.animateCharacter()">Xem hướng dẫn</button>
+        <button onclick="nextWord()">Sau</button>
+    </div>
+
     <script>
+        // Danh sách từ vựng mẫu (Sau này bạn có thể thay bằng file JSON)
+        const vocabulary = [
+            { char: '你', pinyin: 'nǐ', meaning: 'Bạn, anh, chị' },
+            { char: '好', pinyin: 'hǎo', meaning: 'Tốt, khỏe' },
+            { char: '学', pinyin: 'xué', meaning: 'Học' },
+            { char: '习', pinyin: 'xí', meaning: 'Tập' }
+        ];
+
+        let currentIndex = 0;
         let writer;
-        
-        function start(char) {
-            document.getElementById('layer-target').innerHTML = '';
-            document.getElementById('layer-quiz').innerHTML = '';
-            
-            // 1. Tạo lớp chữ mờ nằm dưới
-            HanziWriter.create('layer-target', char, {
-                width: 300, height: 300, padding: 30,
-                showOutline: true, strokeColor: '#000'
+
+        function initWriter(wordObj) {
+            // Xóa nội dung cũ trong ô vẽ
+            document.getElementById('target-kanji').innerHTML = '';
+            document.getElementById('pinyin').innerText = wordObj.pinyin;
+            document.getElementById('meaning').innerText = wordObj.meaning;
+
+            // Khởi tạo Hanzi Writer
+            writer = Hanzi Writer.create('target-kanji', wordObj.char, {
+                width: 300,
+                height: 300,
+                showCharacter: false, // Ẩn chữ gốc để người dùng tự vẽ
+                padding: 15,
+                strokeColor: '#2196F3', // Màu nét vẽ đúng
+                radicalColor: '#f44336' // Màu bộ thủ nếu muốn hiện
             });
 
-            // 2. Tạo lớp Quiz nằm trên để bắt nét vẽ
-            writer = HanziWriter.create('layer-quiz', char, {
-                width: 300, height: 300, padding: 30,
-                showOutline: false,
-                showCharacter: false,
-                // ĐẶC BIỆT CẦN THIẾT:
-                drawingColor: '#333',         // Màu mực bạn đang vẽ
-                drawingWidth: 25,             // Độ dày mực
-                drawingFadeDuration: 0,       // GIỮ NÉT VẼ TAY LẠI (Không cho phai đi)
-                highlightCompleteColor: '#333', // Giữ màu đen khi hoàn thành nét
-                strokeHighlightSpeed: 0,      // Không cho máy vẽ đè lên
-                lenience: 1.5
-            });
-
-            writer.quiz({
-                onCorrectStroke: (data) => {
-                    document.getElementById('status').innerText = "Đúng rồi!";
-                },
-                onComplete: (data) => {
-                    document.getElementById('status').innerText = "Hoàn thành!";
-                }
-            });
+            // Bật chế độ kiểm tra nét vẽ (Quiz)
+            writer.quiz();
         }
 
-        window.onload = () => start('学');
+        function nextWord() {
+            if (currentIndex < vocabulary.length - 1) {
+                currentIndex++;
+                initWriter(vocabulary[currentIndex]);
+            }
+        }
+
+        function prevWord() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                initWriter(vocabulary[currentIndex]);
+            }
+        }
+
+        // Chạy lần đầu tiên
+        initWriter(vocabulary[currentIndex]);
     </script>
 </body>
 </html>
