@@ -6,76 +6,157 @@
     <title>Writing To My Future</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
-        #app-container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-        #target-kanji { width: 200px; height: 200px; margin: 20px auto; border: 1px solid #ddd; background: #fff; }
-        .btn { padding: 10px 20px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
+        #app-container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #target-kanji { width: 250px; height: 250px; margin: 20px auto; border: 2px solid #333; background: #fff; border-radius: 8px; position: relative; }
+        .info { margin-bottom: 10px; }
+        #pinyin { font-size: 24px; color: #e74c3c; margin: 5px 0; }
+        #meaning { font-size: 18px; color: #555; }
+        #status { font-weight: bold; color: #2c3e50; margin-top: 10px; padding: 10px; background: #ecf0f1; border-radius: 5px; }
+        .btn-start { padding: 12px 30px; font-size: 18px; cursor: pointer; background: #27ae60; color: white; border: none; border-radius: 25px; transition: 0.3s; }
+        .btn-start:hover { background: #219150; }
     </style>
 </head>
 <body>
 
-<div id-container>
-    <h1>Học Viết Tiếng Trung</h1>
-    <div id="word-info">
-        <h2 id="pinyin">Đang tải...</h2>
-        <p id="meaning"></p>
+<div id="app-container">
+    <h1>WritingToMyFuture</h1>
+    <div class="info">
+        <div id="pinyin">Đang tải dữ liệu...</div>
+        <div id="meaning"></div>
     </div>
     
     <div id="target-kanji"></div>
-
-    <div id="controls">
-        <button class="btn" onclick="startStep1()">Bắt đầu học (Bước 1)</button>
-    </div>
+    <div id="status">Nhấn nút để bắt đầu học</div>
+    <br>
+    <button id="main-btn" class="btn-start" onclick="startLearning()">Bắt đầu học</button>
 </div>
 
 <script>
-    // THAY LINK SCRIPT CỦA BẠN VÀO ĐÂY
+    // Cấu hình link API của bạn
     const API_URL = "https://script.google.com/macros/s/AKfycbxOeGkwWjiE2Jrzk3J6EoZEaNOriL7VB9iSYr_hU3jzbIBgaA13JgpY9EphLnmqVLNkhA/exec";
     
-    let currentWord = "";
     let writer;
+    let currentWord;
+    let currentStep = 1; // Bước 1, 2, 3
+    let repetition = 1;  // Lần lặp 1, 2
 
-    // 1. Hàm lấy dữ liệu từ Google Sheets
-    async function fetchData() {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        // Lấy thử từ đầu tiên trong danh sách
-        currentWord = data[0];
-        displayWord(currentWord);
+    // 1. Lấy dữ liệu từ Sheets khi vừa mở trang
+    async function loadWord() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            // Lọc lấy từ có Level thấp nhất để học
+            currentWord = data.find(item => item["LEVEL"] < 10) || data[0];
+            
+            document.getElementById('pinyin').innerText = currentWord["PINYIN"];
+            document.getElementById('meaning').innerText = currentWord["NGHĨA"];
+            
+            initWriter(currentWord["CHỮ HÁN"]);
+        } catch (e) {
+            document.getElementById('pinyin').innerText = "Lỗi kết nối API!";
+        }
     }
 
-    function displayWord(word) {
-        document.getElementById('pinyin').innerText = word["PINYIN"];
-        document.getElementById('meaning').innerText = word["NGHĨA"];
-        
-        // Khởi tạo Hanzi Writer cho chữ Hán đó
-        writer = HanziWriter.create('target-kanji', word["CHỮ HÁN"], {
-            width: 200,
-            height: 200,
-            padding: 5,
+    function initWriter(character) {
+        document.getElementById('target-kanji').innerHTML = '';
+        writer = HanziWriter.create('target-kanji', character, {
+            width: 250,
+            height: 250,
+            padding: 10,
             showOutline: true,
             strokeAnimationSpeed: 1,
-            delayBetweenStrokes: 500
+            delayBetweenStrokes: 500,
+            strokeColor: '#2980b9'
         });
     }
 
-    // 2. Logic Bước 1: Animation và cho phép vẽ song song
-    function startStep1() {
-        if (!writer) return;
+    function startLearning() {
+        document.getElementById('main-btn').style.display = 'none';
+        currentStep = 1;
+        repetition = 1;
+        runStep();
+    }
+
+    // 2. Logic điều khiển các bước
+    function runStep() {
+        updateStatus();
         
-        // Chạy animation hướng dẫn
-        writer.animateCharacter();
-        
-        // Bật chế độ cho phép người dùng vẽ theo (Quiz mode)
+        // Cấu hình cho từng bước
+        let showOutline = (currentStep === 1 || currentStep === 2);
+        writer.setOutlineVisible(showOutline);
+
+        if (currentStep === 1) {
+            writer.animateCharacter(); // Bước 1 có animation
+        }
+
         writer.quiz({
+            showOutline: showOutline,
             onComplete: function(data) {
-                alert("Hoàn thành bước 1! Bạn đã viết đúng nét.");
+                handleFinishRepetition();
             }
         });
     }
 
-    // Gọi hàm fetch khi trang web vừa mở
-    fetchData();
+    function handleFinishRepetition() {
+        if (repetition < 2) {
+            repetition++;
+            setTimeout(() => {
+                writer.cancelQuietly();
+                runStep();
+            }, 500);
+        } else {
+            // Đã xong 2 lần của bước hiện tại
+            if (currentStep < 3) {
+                currentStep++;
+                repetition = 1;
+                setTimeout(() => {
+                    writer.cancelQuietly();
+                    runStep();
+                }, 800);
+            } else {
+                // Đã xong cả 3 bước
+                finishAllSteps();
+            }
+        }
+    }
+
+    function updateStatus() {
+        let stepText = "";
+        if (currentStep === 1) stepText = "Bước 1: Nhìn nét vẽ và vẽ theo";
+        if (currentStep === 2) stepText = "Bước 2: Vẽ theo nét mờ";
+        if (currentStep === 3) stepText = "Bước 3: Tự nhớ và vẽ";
+        document.getElementById('status').innerText = `${stepText} (Lần ${repetition}/2)`;
+    }
+
+    // 3. Kết thúc và cộng Level lên Google Sheets
+    async function finishAllSteps() {
+        document.getElementById('status').innerText = "Đang lưu tiến trình...";
+        
+        const updateData = {
+            hanzi: currentWord["CHỮ HÁN"],
+            level: Number(currentWord["LEVEL"]) + 1,
+            totalWrites: Number(currentWord["SỐ LẦN VIẾT"]) + 1,
+            correct: Number(currentWord["SỐ LẦN VIẾT ĐÚNG"]) + 1,
+            wrong: Number(currentWord["SỐ LẦN VIẾT SAI"])
+        };
+
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Dùng để tránh lỗi Cross-Origin của Google Script
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+            
+            document.getElementById('status').innerText = "Chúc mừng! Đã tăng 1 Level.";
+            setTimeout(() => location.reload(), 2000); // Tải lại trang để học từ tiếp theo
+        } catch (e) {
+            document.getElementById('status').innerText = "Đã xong nhưng lỗi lưu dữ liệu.";
+        }
+    }
+
+    loadWord();
 </script>
 
 </body>
